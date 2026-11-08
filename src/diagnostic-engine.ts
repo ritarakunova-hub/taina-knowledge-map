@@ -7,6 +7,7 @@ export type Requirement = {
   why: string;
   terms: string[];
   kind: 'document' | 'rule' | 'data' | 'control' | 'integration';
+  question: string;
 };
 export type RequirementResult = Requirement & {
   status: EvidenceStatus;
@@ -29,6 +30,7 @@ export type AutomationDiagnostic = {
   readiness: 'not-assessed' | 'preparation-needed' | 'ready-for-pilot-review';
   readinessReasons: string[];
   disclaimer: string;
+  verificationQuestions: string[];
 };
 
 const value = (input: unknown) => typeof input === 'string' ? input.trim() : '';
@@ -59,24 +61,23 @@ function linkedRecords(project: Project, processId: string) {
 
 function requirementResult(requirement: Requirement, sources: Project['sources'], documents: Project['documents']): RequirementResult {
   const candidates = [
-    ...documents.map(item => ({ name: value(item.name), status: value(item.status), type: 'document' })),
-    ...sources.map(item => ({ name: value(item.name), status: value(item.status), type: 'source' }))
+    ...documents.map(item => ({ name: value(item.name), status: value(item.status), evidenceStatus: value(item.evidenceStatus), contentNotes: value(item.contentNotes), conflictNotes: value(item.conflictNotes), type: 'document' })),
+    ...sources.map(item => ({ name: value(item.name), status: value(item.status), evidenceStatus: value(item.evidenceStatus), contentNotes: value(item.contentNotes), conflictNotes: value(item.conflictNotes), type: 'source' }))
   ].filter(item => item.name);
   const matches = candidates.filter(item => hasAny(item.name, requirement.terms));
   const stale = matches.filter(item => ['устарела', 'архив', 'не действует'].includes(norm(item.status)));
-  const usable = matches.filter(item => !stale.includes(item));
-  const evidence = matches.map(item => item.name + (item.status ? ' · ' + item.status : ''));
-  if (usable.length > 1 && usable.some(item => hasAny(item.name, ['старая', 'архив'])) && usable.some(item => !hasAny(item.name, ['старая', 'архив']))) {
-    return { ...requirement, status: 'needs-verification', evidence, nextStep: 'Сверить версии и подтвердить, какой источник действует.' };
+  const contradictory = matches.filter(item => norm(item.evidenceStatus) === norm('Противоречие') || Boolean(item.conflictNotes));
+  const verified = matches.filter(item => norm(item.evidenceStatus) === norm('Проверено владельцем') && !stale.includes(item) && !contradictory.includes(item));
+  const unverified = matches.filter(item => !stale.includes(item) && !contradictory.includes(item) && !verified.includes(item));
+  const evidence = matches.map(item => [item.name, item.status, item.evidenceStatus, item.contentNotes ? `Содержание: ${item.contentNotes}` : '', item.conflictNotes ? `Замечание: ${item.conflictNotes}` : ''].filter(Boolean).join(' · '));
+  if (contradictory.length) {
+    return { ...requirement, status: 'contradictory', evidence, nextStep: 'Разобрать зафиксированное противоречие с владельцами источников. До согласования не использовать эти сведения в AI.' };
   }
-  if (usable.length && stale.length) {
-    return { ...requirement, status: 'needs-verification', evidence, nextStep: 'Проверить актуальность найденных материалов и исключить устаревшие версии.' };
+  if (stale.length || unverified.length) {
+    return { ...requirement, status: 'needs-verification', evidence, nextStep: stale.length ? 'Есть устаревший материал: найдите действующую версию и подтвердите её у владельца.' : 'Материал найден по названию, но его содержание ещё не подтверждено владельцем.' };
   }
-  if (usable.length) {
-    return { ...requirement, status: 'found', evidence, nextStep: 'Проверить содержание и утвердить источник у владельца.' };
-  }
-  if (matches.length) {
-    return { ...requirement, status: 'needs-verification', evidence, nextStep: 'Найден только материал со статусом «устарел/архив». Нужна актуальная версия или подтверждение.' };
+  if (verified.length) {
+    return { ...requirement, status: 'found', evidence, nextStep: 'Владелец подтвердил материал. Перед пилотом отдельно проверьте полноту, права доступа и тестовые ответы.' };
   }
   return { ...requirement, status: 'not-found-in-map', evidence: [], nextStep: 'Уточнить у владельца процесса, существует ли такой материал. Отсутствие записи в карте ещё не доказывает, что документа нет.' };
 }
@@ -107,13 +108,14 @@ export function buildAutomationDiagnostic(project: Project, processId: string): 
   ];
   const requirements = salesAssistantRequirements.map(item => requirementResult(item, sources, documents));
   const blockers = dimensions.filter(item => item.status !== 'described').map(item => 'Не заполнен раздел: ' + item.title);
-  const missing = requirements.filter(item => item.status === 'not-found-in-map' || item.status === 'needs-verification');
+  const missing = requirements.filter(item => item.status === 'not-found-in-map' || item.status === 'needs-verification' || item.status === 'contradictory');
   if (linkedGaps.length) blockers.push('Есть открытые замечания по процессу: ' + linkedGaps.map(item => value(item.name)).filter(Boolean).join(', '));
   if (requirements.some(item => item.status === 'contradictory')) blockers.push('Обнаружены противоречивые материалы.');
   const readiness = dimensions.every(item => item.status === 'described') && missing.length === 0 && linkedGaps.length === 0
     ? 'ready-for-pilot-review'
     : 'preparation-needed';
-  const readinessReasons = [...blockers, ...missing.map(item => item.title + ': ' + item.status)];\n  const verificationQuestions = missing.map(item => item.title + ': ' + item.question);
+  const readinessReasons = [...blockers, ...missing.map(item => item.title + ': ' + item.status)];
+  const verificationQuestions = missing.map(item => item.title + ': ' + item.question);
   return {
     scenario: 'AI-помощник отдела продаж',
     processId,
