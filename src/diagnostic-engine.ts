@@ -40,6 +40,12 @@ const meaningful = (input: unknown) => {
   const v = norm(value(input));
   return Boolean(v) && !['не указано', 'не определен', 'не определён', 'не описан', 'не описано', 'нет данных', 'пока документированных шагов нет', 'n/a', 'неизвестно'].includes(v);
 };
+const isPastDate = (input: unknown) => {
+  const date = value(input);
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return false;
+  const parsed = new Date(`${date}T00:00:00`);
+  return Number.isFinite(parsed.getTime()) && parsed.getTime() < new Date(new Date().toDateString()).getTime();
+};
 
 const salesAssistantRequirements: Requirement[] = [
   { id: 'product', title: 'Каталог продуктов и услуг', why: 'Ассистент должен понимать, что именно предлагает компания, кому подходит предложение и какие ограничения действуют.', question: 'Какие продукты и услуги разрешено предлагать? Где находится утверждённое описание и кто отвечает за него?', terms: ['каталог', 'продукт', 'услуг', 'ассортимент', 'описание продукта'], kind: 'document' },
@@ -61,13 +67,13 @@ function linkedRecords(project: Project, processId: string) {
 
 function requirementResult(requirement: Requirement, sources: Project['sources'], documents: Project['documents']): RequirementResult {
   const candidates = [
-    ...documents.map(item => ({ name: value(item.name), status: value(item.status), evidenceStatus: value(item.evidenceStatus), contentNotes: value(item.contentNotes), conflictNotes: value(item.conflictNotes), type: 'document' })),
-    ...sources.map(item => ({ name: value(item.name), status: value(item.status), evidenceStatus: value(item.evidenceStatus), contentNotes: value(item.contentNotes), conflictNotes: value(item.conflictNotes), type: 'source' }))
+    ...documents.map(item => ({ name: value(item.name), status: value(item.status), evidenceStatus: value(item.evidenceStatus), contentNotes: value(item.contentNotes), conflictNotes: value(item.conflictNotes), verifiedBy: value(item.verifiedBy), verifiedAt: value(item.verifiedAt), nextReview: value(item.nextReview), type: 'document' })),
+    ...sources.map(item => ({ name: value(item.name), status: value(item.status), evidenceStatus: value(item.evidenceStatus), contentNotes: value(item.contentNotes), conflictNotes: value(item.conflictNotes), verifiedBy: value(item.verifiedBy), verifiedAt: value(item.verifiedAt), nextReview: value(item.nextReview), type: 'source' }))
   ].filter(item => item.name);
   const matches = candidates.filter(item => hasAny(item.name, requirement.terms));
-  const stale = matches.filter(item => ['устарела', 'архив', 'не действует'].includes(norm(item.status)));
+  const stale = matches.filter(item => ['устарела', 'архив', 'не действует'].includes(norm(item.status)) || isPastDate(item.nextReview));
   const contradictory = matches.filter(item => norm(item.evidenceStatus) === norm('Противоречие') || Boolean(item.conflictNotes));
-  const verified = matches.filter(item => norm(item.evidenceStatus) === norm('Проверено владельцем') && !stale.includes(item) && !contradictory.includes(item));
+  const verified = matches.filter(item => norm(item.evidenceStatus) === norm('Проверено владельцем') && meaningful(item.verifiedBy) && /^\\d{4}-\\d{2}-\\d{2}$/.test(item.verifiedAt) && !stale.includes(item) && !contradictory.includes(item));
   const unverified = matches.filter(item => !stale.includes(item) && !contradictory.includes(item) && !verified.includes(item));
   const evidence = matches.map(item => [item.name, item.status, item.evidenceStatus, item.contentNotes ? `Содержание: ${item.contentNotes}` : '', item.conflictNotes ? `Замечание: ${item.conflictNotes}` : ''].filter(Boolean).join(' · '));
   if (contradictory.length) {
@@ -96,7 +102,7 @@ export function buildAutomationDiagnostic(project: Project, processId: string): 
   const linkedGaps = project.gaps.filter(item => value(item.process) === processId && !['готово', 'закрыта'].includes(norm(value(item.status))));
   const hasRules = meaningful(process.rules) || meaningful(process.decisions) || meaningful(process.exceptions);
   const hasControl = meaningful(process.kpi) || meaningful(process.control) || meaningful(process.metrics);
-  const hasReview = meaningful(process.nextReview) || meaningful(process.reviewDate) || documents.some(item => meaningful(item.nextReview));
+  const reviewDates = [process.nextReview, process.reviewDate, ...documents.map(item => item.nextReview)].filter(meaningful).map(value);\n  const overdueReviews = reviewDates.filter(isPastDate);\n  const hasReview = reviewDates.length > 0;
   const dimensions: ProcessDimension[] = [
     dimension('purpose', 'Цель процесса', meaningful(process.purpose), [value(process.purpose)].filter(Boolean), 'Какой измеримый результат должен дать процесс?'),
     dimension('steps', 'Последовательность действий', meaningful(process.steps), [value(process.steps)].filter(Boolean), 'Все ли реальные шаги и варианты выполнения описаны?'),
@@ -104,7 +110,7 @@ export function buildAutomationDiagnostic(project: Project, processId: string): 
     dimension('sources', 'Источники и документы', sourceNames.length + documentNames.length > 0, [...documentNames, ...sourceNames], 'Какие источники являются действующими и кто подтверждает их содержание?'),
     dimension('rules', 'Правила и исключения', hasRules, [value(process.rules), value(process.decisions), value(process.exceptions)].filter(Boolean), 'Какие правила принятия решений и исключения должен соблюдать сотрудник или AI?'),
     dimension('control', 'Контроль результата', hasControl, [value(process.kpi), value(process.control), value(process.metrics)].filter(Boolean), 'По каким показателям проверяется качество и кто разбирает ошибки?'),
-    dimension('review', 'Актуальность', hasReview, [value(process.nextReview), value(process.reviewDate), ...documents.map(item => value(item.nextReview))].filter(Boolean), 'Кто и когда пересматривает процесс и связанные материалы?')
+    dimension('review', 'Актуальность', hasReview, [value(process.nextReview), value(process.reviewDate), ...documents.map(item => value(item.nextReview))].filter(Boolean), overdueReviews.length ? 'Срок проверки уже прошёл. Кто обновит процесс и подтвердит актуальность связанных материалов?' : 'Кто и когда пересматривает процесс и связанные материалы?', overdueReviews.length ? 'incomplete' : undefined)
   ];
   const requirements = salesAssistantRequirements.map(item => requirementResult(item, sources, documents));
   const blockers = dimensions.filter(item => item.status !== 'described').map(item => 'Не заполнен раздел: ' + item.title);
