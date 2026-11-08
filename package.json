@@ -1,1 +1,28 @@
-{"name":"taina-knowledge-map","version":"1.0.0","private":true}
+{
+  "name": "taina-knowledge-map",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "playwright test",
+    "test:unit": "node --experimental-strip-types --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "idb": "8.0.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@types/node": "26.6.6",
+    "@vitejs/plugin-react": "6.2.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.6"
+  },
+  "engines": {
+    "node": ">=22.6.0"
+  }
+}

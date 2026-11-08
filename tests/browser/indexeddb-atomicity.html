@@ -1,0 +1,79 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>TAINA IndexedDB transaction smoke test</title>
+<pre id="result">RUNNING</pre>
+<script>
+(async () => {
+  const output = document.querySelector('#result');
+  const lines = [];
+  const assert = (condition, message) => { if (!condition) throw new Error(message); lines.push(`PASS ${message}`); };
+  const open = () => new Promise((resolve, reject) => {
+    const request = indexedDB.open('taina-atomicity-browser-test', 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore('projects', { keyPath: 'id' });
+      request.result.createObjectStore('settings');
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  const requestValue = request => new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  // Attach transaction listeners immediately: a fast transaction may complete
+  // before code awaiting its final request resumes.
+  const transactionDone = tx => new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
+    tx.onerror = () => reject(tx.error || new Error('Transaction failed'));
+  });
+  const db = await open();
+  const seed = db.transaction(['projects', 'settings'], 'readwrite');
+  const seedDone = transactionDone(seed);
+  seed.objectStore('projects').put({ id: 'old', payload: 'keep-me' });
+  seed.objectStore('settings').put('old', 'active');
+  await seedDone;
+
+  // Queue the same three writes used by project replacement, then abort before commit.
+  const failed = db.transaction(['projects', 'settings'], 'readwrite');
+  const failedDone = new Promise(resolve => { failed.onabort = resolve; failed.onerror = resolve; });
+  failed.objectStore('projects').delete('old');
+  failed.objectStore('projects').put({ id: 'new', payload: 'must-not-commit' });
+  failed.objectStore('settings').put('new', 'active');
+  failed.abort();
+  await failedDone;
+  const checkRollback = db.transaction(['projects', 'settings'], 'readonly');
+  const checkRollbackDone = transactionDone(checkRollback);
+  const oldAfterAbort = await requestValue(checkRollback.objectStore('projects').get('old'));
+  const newAfterAbort = await requestValue(checkRollback.objectStore('projects').get('new'));
+  const pointerAfterAbort = await requestValue(checkRollback.objectStore('settings').get('active'));
+  await checkRollbackDone;
+  assert(oldAfterAbort?.payload === 'keep-me', 'aborted replacement preserves previous project');
+  assert(newAfterAbort === undefined, 'aborted replacement does not leave new project');
+  assert(pointerAfterAbort === 'old', 'aborted replacement preserves active pointer');
+
+  // Commit a successful replacement atomically.
+  const success = db.transaction(['projects', 'settings'], 'readwrite');
+  const successDone = transactionDone(success);
+  success.objectStore('projects').delete('old');
+  success.objectStore('projects').put({ id: 'new', payload: 'committed' });
+  success.objectStore('settings').put('new', 'active');
+  await successDone;
+  const checkCommit = db.transaction(['projects', 'settings'], 'readonly');
+  const checkCommitDone = transactionDone(checkCommit);
+  const oldAfterCommit = await requestValue(checkCommit.objectStore('projects').get('old'));
+  const newAfterCommit = await requestValue(checkCommit.objectStore('projects').get('new'));
+  const pointerAfterCommit = await requestValue(checkCommit.objectStore('settings').get('active'));
+  await checkCommitDone;
+  assert(oldAfterCommit === undefined, 'successful replacement removes previous project');
+  assert(newAfterCommit?.payload === 'committed', 'successful replacement stores new project');
+  assert(pointerAfterCommit === 'new', 'successful replacement updates active pointer');
+
+  output.textContent = lines.join('\n') + '\nALL BROWSER INDEXEDDB TESTS PASSED';
+  document.documentElement.dataset.result = 'passed';
+  db.close();
+})().catch(error => {
+  document.querySelector('#result').textContent = 'FAIL ' + (error?.stack || error);
+  document.documentElement.dataset.result = 'failed';
+});
+</script>
