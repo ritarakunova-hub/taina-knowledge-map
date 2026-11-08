@@ -87,7 +87,7 @@ export function createXlsx(project: Project) {
       ['Владелец проекта', project.company.ownerName], ['Сценарий работы', project.scenario],
       ...Object.entries(project.diagnostic || {}).map(([key, value]) => [`Диагностика: ${key}`, value])
     ]},
-    rowTab('Источники', project.sources, ['id', 'name', 'type', 'location', 'owner', 'process', 'status', 'contentNotes', 'evidenceStatus', 'verifiedBy', 'verifiedAt', 'conflictNotes']),
+    rowTab('Источники', project.sources, ['id', 'name', 'type', 'location', 'owner', 'process', 'status', 'nextReview', 'contentNotes', 'evidenceStatus', 'verifiedBy', 'verifiedAt', 'conflictNotes']),
     rowTab('Процессы', project.processes, ['id', 'name', 'department', 'purpose', 'inputs', 'steps', 'outputs', 'owner', 'status']),
     rowTab('Документы', project.documents, ['id', 'name', 'type', 'version', 'process', 'owner', 'nextReview', 'status', 'contentNotes', 'evidenceStatus', 'verifiedBy', 'verifiedAt', 'conflictNotes']),
     rowTab('Проблемы', project.gaps, ['id', 'name', 'type', 'risk', 'priority', 'process', 'document', 'owner', 'dueDate', 'status']),
