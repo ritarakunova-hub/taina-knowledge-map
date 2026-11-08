@@ -60,3 +60,38 @@ test('XLSX treats formula-like user input as inert text and strips invalid XML c
   assert.doesNotMatch(sheetXml, /<f>/);
   assert.doesNotMatch(sheetXml, /\u0001/);
 });
+
+
+test('XLSX preserves source review dates and process rules, decisions, exceptions and controls', async () => {
+  const project = {
+    company: {name: 'Demo', industry: '', teamSize: '', departments: '', ownerName: ''},
+    scenario: 'team', diagnostic: {},
+    sources: [{id: 's1', name: 'CRM guide', nextReview: '2027-02-01'}],
+    processes: [{
+      id: 'sales', name: 'Продажи', criticality: 'Высокий',
+      purpose: 'Продать', inputs: 'Лид', steps: 'Связаться', outputs: 'Сделка',
+      rules: 'Без обещаний скидки', decisions: 'Скидка только по согласованию',
+      exceptions: 'VIP передать руководителю', kpi: 'Конверсия',
+      control: 'Проверка звонков', nextReview: '2027-03-01', owner: 'o1', status: 'Действует'
+    }],
+    documents: [], gaps: [], owners: [], aiTests: [], tasks: [], changes: []
+  };
+  const bytes = new Uint8Array(await createXlsx(project).arrayBuffer());
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const files = new Map();
+  let offset = 0;
+  while (offset + 30 < bytes.length && view.getUint32(offset, true) === 0x04034b50) {
+    const size = view.getUint32(offset + 18, true);
+    const nameLength = view.getUint16(offset + 26, true);
+    const extraLength = view.getUint16(offset + 28, true);
+    const name = new TextDecoder().decode(bytes.slice(offset + 30, offset + 30 + nameLength));
+    const start = offset + 30 + nameLength + extraLength;
+    files.set(name, new TextDecoder().decode(bytes.slice(start, start + size)));
+    offset = start + size;
+  }
+  assert.match(files.get('xl/worksheets/sheet2.xml'), /2027-02-01/);
+  const processSheet = files.get('xl/worksheets/sheet3.xml');
+  for (const value of ['2027-03-01', 'Без обещаний скидки', 'Скидка только по согласованию', 'VIP передать руководителю', 'Конверсия', 'Проверка звонков']) {
+    assert.ok(processSheet.includes(value), `Process export is missing ${value}`);
+  }
+});
