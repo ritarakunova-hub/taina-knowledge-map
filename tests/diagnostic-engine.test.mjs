@@ -91,3 +91,12 @@ test('overdue process review is shown as incomplete rather than current', () => 
   assert.equal(review.status, 'incomplete');
   assert.match(review.question, /срок проверки уже прошёл/i);
 });
+
+
+test('a future verification date is not accepted as owner confirmation', () => {
+  const p = project();
+  p.processes = [{ id: 'sales', name: 'Продажи', purpose: 'Продать', steps: 'Принять лид' }];
+  p.documents = [{ id: 'd1', name: 'Прайс и правила скидок', process: 'sales', status: 'Действует', evidenceStatus: 'Проверено владельцем', verifiedBy: 'Анна', verifiedAt: '2999-01-01' }];
+  const prices = buildAutomationDiagnostic(p, 'sales').requirements.find(item => item.id === 'prices');
+  assert.equal(prices.status, 'needs-verification');
+});
