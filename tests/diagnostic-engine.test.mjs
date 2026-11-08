@@ -17,7 +17,7 @@ test('diagnostic distinguishes missing-in-map from proven absence and lists scen
   assert.equal(result.requirements.length, 9);
   assert.equal(result.requirements.find(item => item.id === 'prices').status, 'not-found-in-map');
   assert.match(result.requirements.find(item => item.id === 'prices').nextStep, /не доказывает/);
-  assert.equal(result.readiness, 'preparation-needed');
+  assert.equal(result.readiness, 'preparation-needed');\n  assert.ok(result.verificationQuestions.some(question => question.includes('Актуальный прайс')));\n  assert.ok(result.verificationQuestions.some(question => question.includes('Кто утверждает скидки')));
 });
 
 test('diagnostic finds linked materials by name and flags stale materials for verification', () => {
@@ -33,7 +33,7 @@ test('diagnostic finds linked materials by name and flags stale materials for ve
   assert.equal(result.requirements.find(item => item.id === 'product').status, 'found');
   assert.equal(result.requirements.find(item => item.id === 'faq').status, 'found');
   assert.equal(result.requirements.find(item => item.id === 'prices').status, 'needs-verification');
-  assert.ok(result.dimensions.every(item => item.status === 'described'));
+  assert.ok(result.dimensions.every(item => item.status === 'described'));\n  assert.equal(result.verificationQuestions.some(question => question.includes('Актуальный прайс')), true);
 });
 
 test('unknown process returns null and empty map never invents process findings', () => {
