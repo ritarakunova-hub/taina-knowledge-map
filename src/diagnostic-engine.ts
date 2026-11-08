@@ -115,7 +115,7 @@ export function buildAutomationDiagnostic(project: Project, processId: string): 
   const linkedGaps = project.gaps.filter(item => value(item.process) === processId && !['готово', 'закрыта'].includes(norm(value(item.status))));
   const hasRules = meaningful(process.rules) || meaningful(process.decisions) || meaningful(process.exceptions);
   const hasControl = meaningful(process.kpi) || meaningful(process.control) || meaningful(process.metrics);
-  const reviewDates = [process.nextReview, process.reviewDate, ...documents.map(item => item.nextReview)].filter(meaningful).map(value);
+  const reviewDates = [process.nextReview, process.reviewDate, ...documents.map(item => item.nextReview), ...sources.map(item => item.nextReview)].filter(meaningful).map(value);
   const overdueReviews = reviewDates.filter(isPastDate);
   const hasReview = reviewDates.length > 0;
   const dimensions: ProcessDimension[] = [
@@ -125,7 +125,7 @@ export function buildAutomationDiagnostic(project: Project, processId: string): 
     dimension('sources', 'Источники и документы', sourceNames.length + documentNames.length > 0, [...documentNames, ...sourceNames], 'Какие источники являются действующими и кто подтверждает их содержание?'),
     dimension('rules', 'Правила и исключения', hasRules, [value(process.rules), value(process.decisions), value(process.exceptions)].filter(Boolean), 'Какие правила принятия решений и исключения должен соблюдать сотрудник или AI?'),
     dimension('control', 'Контроль результата', hasControl, [value(process.kpi), value(process.control), value(process.metrics)].filter(Boolean), 'По каким показателям проверяется качество и кто разбирает ошибки?'),
-    dimension('review', 'Актуальность', hasReview, [value(process.nextReview), value(process.reviewDate), ...documents.map(item => value(item.nextReview))].filter(Boolean), overdueReviews.length ? 'Срок проверки уже прошёл. Кто обновит процесс и подтвердит актуальность связанных материалов?' : 'Кто и когда пересматривает процесс и связанные материалы?', overdueReviews.length ? 'incomplete' : undefined)
+    dimension('review', 'Актуальность', hasReview, [value(process.nextReview), value(process.reviewDate), ...documents.map(item => value(item.nextReview)), ...sources.map(item => value(item.nextReview))].filter(Boolean), overdueReviews.length ? 'Срок проверки уже прошёл. Кто обновит процесс и подтвердит актуальность связанных материалов?' : 'Кто и когда пересматривает процесс и связанные материалы?', overdueReviews.length ? 'incomplete' : undefined)
   ];
   const requirements = salesAssistantRequirements.map(item => requirementResult(item, sources, documents));
   const blockers = dimensions.filter(item => item.status !== 'described').map(item => 'Не заполнен раздел: ' + item.title);
