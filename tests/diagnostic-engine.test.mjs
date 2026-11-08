@@ -35,7 +35,8 @@ test('diagnostic finds linked materials by name and flags stale materials for ve
   assert.equal(result.requirements.find(item => item.id === 'product').status, 'found');
   assert.equal(result.requirements.find(item => item.id === 'faq').status, 'found');
   assert.equal(result.requirements.find(item => item.id === 'prices').status, 'needs-verification');
-  assert.ok(result.dimensions.every(item => item.status === 'described'));
+  assert.ok(result.dimensions.filter(item => item.id !== 'review').every(item => item.status === 'described'));
+  assert.equal(result.dimensions.find(item => item.id === 'review').status, 'incomplete');
   assert.equal(result.verificationQuestions.some(question => question.includes('Актуальный прайс')), true);
 });
 
