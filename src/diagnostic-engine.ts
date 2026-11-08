@@ -101,8 +101,8 @@ function requirementResult(requirement: Requirement, sources: Project['sources']
   return { ...requirement, status: 'not-found-in-map', evidence: [], nextStep: 'Уточнить у владельца процесса, существует ли такой материал. Отсутствие записи в карте ещё не доказывает, что документа нет.' };
 }
 
-function dimension(id: string, title: string, present: boolean, evidence: string[], question: string): ProcessDimension {
-  return { id, title, status: present ? 'described' : 'not-recorded', evidence, question };
+function dimension(id: string, title: string, present: boolean, evidence: string[], question: string, status?: ProcessDimension['status']): ProcessDimension {
+  return { id, title, status: status ?? (present ? 'described' : 'not-recorded'), evidence, question };
 }
 
 export function buildAutomationDiagnostic(project: Project, processId: string): AutomationDiagnostic | null {
