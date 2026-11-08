@@ -154,3 +154,13 @@ The earlier entries above describe the state of the initial source-only review o
 - Replaced mutable major-version Action tags in both PR validation and Pages deployment workflows with verified full commit SHAs for checkout, setup-node, configure-pages, upload-pages-artifact, and deploy-pages.
 - The PR validation run after pinning, [42519427966](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/42519427966), completed successfully: dependency install, high/critical dependency audit threshold, unit tests, Playwright browser tests, and production build all passed.
 - This reduces mutable-tag risk for the Actions currently used. It does not replace periodic SHA updates, review of transitive action dependencies, or a full CI/CD threat model.
+
+
+## Diagnostic evidence validation hardening — 2026-11-08
+
+- A source/document marked `Проверено владельцем` is now accepted as confirmed evidence only when a verifier name and a valid, non-future ISO date are recorded.
+- A matching source/document with an expired `nextReview` date is downgraded to `needs-verification`, even if its record status still says `Действует`.
+- A process/document review date in the past is surfaced as an incomplete review dimension and blocks the preliminary readiness state.
+- Added regression tests for missing verifier metadata, expired evidence review dates, overdue process review, and future-dated confirmation.
+- The PR validation workflow for commit `77bd9631a8f01df5f8de01830612957335710076` (run [42520189733](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/42520189733)) passed unit tests, browser tests, dependency audit at high/critical threshold, and production build.
+- The subsequent date-validation helper correction is on the current branch head and has a newer validation run pending; do not treat the older successful run as validation of a later commit.
