@@ -61,3 +61,8 @@ A matching record name is not proof that a requirement is satisfied. Each source
 The diagnostic counts a matched item as found only when it is explicitly marked `Проверено владельцем` and is not stale or contradictory. A known conflict blocks the requirement. All other name matches remain `needs-verification`. A missing match still means only `not-found-in-map`, not proof that the company has no such material.
 
 This release does not upload files, parse document contents, or discover contradictions automatically. Those require a separate secure file-processing pipeline and human confirmation.
+
+
+## Status implementation note
+
+The engine currently emits `found`, `not-found-in-map`, `needs-verification`, and `contradictory`. The `partial` value is reserved in the type for a future content-completeness assessment and is not emitted by this version. A human-written `contentNotes` summary is evidence context, not automatic proof of completeness.
