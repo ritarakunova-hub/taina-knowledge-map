@@ -73,7 +73,7 @@ function requirementResult(requirement: Requirement, sources: Project['sources']
   const matches = candidates.filter(item => hasAny(item.name, requirement.terms));
   const stale = matches.filter(item => ['устарела', 'архив', 'не действует'].includes(norm(item.status)) || isPastDate(item.nextReview));
   const contradictory = matches.filter(item => norm(item.evidenceStatus) === norm('Противоречие') || Boolean(item.conflictNotes));
-  const verified = matches.filter(item => norm(item.evidenceStatus) === norm('Проверено владельцем') && meaningful(item.verifiedBy) && /^\\d{4}-\\d{2}-\\d{2}$/.test(item.verifiedAt) && !stale.includes(item) && !contradictory.includes(item));
+  const verified = matches.filter(item => norm(item.evidenceStatus) === norm('Проверено владельцем') && meaningful(item.verifiedBy) && isValidDate(item.verifiedAt) && !isFutureDate(item.verifiedAt) && !stale.includes(item) && !contradictory.includes(item));
   const unverified = matches.filter(item => !stale.includes(item) && !contradictory.includes(item) && !verified.includes(item));
   const evidence = matches.map(item => [item.name, item.status, item.evidenceStatus, item.contentNotes ? `Содержание: ${item.contentNotes}` : '', item.conflictNotes ? `Замечание: ${item.conflictNotes}` : ''].filter(Boolean).join(' · '));
   if (contradictory.length) {
