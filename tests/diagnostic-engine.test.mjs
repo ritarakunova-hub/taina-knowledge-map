@@ -64,3 +64,30 @@ test('explicit conflict blocks evidence even when a material was otherwise appro
   assert.equal(result.requirements.find(item => item.id === 'prices').status, 'contradictory');
   assert.equal(result.readiness, 'preparation-needed');
 });
+
+
+test('owner-confirmed status without verifier and verification date is not accepted as evidence', () => {
+  const p = project();
+  p.processes = [{ id: 'sales', name: 'Продажи', purpose: 'Продать', steps: 'Принять лид' }];
+  p.documents = [{ id: 'd1', name: 'Прайс и правила скидок', process: 'sales', status: 'Действует', evidenceStatus: 'Проверено владельцем', contentNotes: 'Цены сверены' }];
+  const prices = buildAutomationDiagnostic(p, 'sales').requirements.find(item => item.id === 'prices');
+  assert.equal(prices.status, 'needs-verification');
+  assert.match(prices.nextStep, /содержание ещё не подтверждено/);
+});
+
+test('a past document review date invalidates an otherwise owner-confirmed material', () => {
+  const p = project();
+  p.processes = [{ id: 'sales', name: 'Продажи', purpose: 'Продать', steps: 'Принять лид' }];
+  p.documents = [{ id: 'd1', name: 'Прайс и правила скидок', process: 'sales', status: 'Действует', evidenceStatus: 'Проверено владельцем', verifiedBy: 'Анна', verifiedAt: '2026-11-08', nextReview: '2020-01-01' }];
+  const prices = buildAutomationDiagnostic(p, 'sales').requirements.find(item => item.id === 'prices');
+  assert.equal(prices.status, 'needs-verification');
+  assert.match(prices.nextStep, /устаревший материал/);
+});
+
+test('overdue process review is shown as incomplete rather than current', () => {
+  const p = project();
+  p.processes = [{ id: 'sales', name: 'Продажи', purpose: 'Продать', steps: 'Принять лид', nextReview: '2020-01-01' }];
+  const review = buildAutomationDiagnostic(p, 'sales').dimensions.find(item => item.id === 'review');
+  assert.equal(review.status, 'incomplete');
+  assert.match(review.question, /срок проверки уже прошёл/i);
+});
