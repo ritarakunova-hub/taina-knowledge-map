@@ -163,4 +163,4 @@ The earlier entries above describe the state of the initial source-only review o
 - A process/document review date in the past is surfaced as an incomplete review dimension and blocks the preliminary readiness state.
 - Added regression tests for missing verifier metadata, expired evidence review dates, overdue process review, and future-dated confirmation.
 - The PR validation workflow for commit `77bd9631a8f01df5f8de01830612957335710076` (run [42520189733](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/42520189733)) passed unit tests, browser tests, dependency audit at high/critical threshold, and production build.
-- The subsequent date-validation helper correction is on the current branch head and has a newer validation run pending; do not treat the older successful run as validation of a later commit.
+- The date-validation helper correction and all regression tests are included in the successfully validated commit above. The documentation-only update in this file is a later commit; its PR workflow is being re-run.
