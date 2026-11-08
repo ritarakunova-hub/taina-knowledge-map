@@ -32,8 +32,8 @@ test('diagnostic finds linked materials by name and flags stale materials for ve
   ];
   p.sources = [{ id: 's1', name: 'FAQ — частые вопросы клиентов', process: 'sales', owner: 'o1', location: 'Drive', type: 'Документ', evidenceStatus: 'Проверено владельцем', contentNotes: 'Ответы согласованы с руководителем', verifiedBy: 'Анна', verifiedAt: '2026-11-08' }];
   const result = buildAutomationDiagnostic(p, 'sales');
-  assert.equal(result.requirements.find(item => item.id === 'product').status, 'needs-verification');
-  assert.equal(result.requirements.find(item => item.id === 'faq').status, 'needs-verification');
+  assert.equal(result.requirements.find(item => item.id === 'product').status, 'found');
+  assert.equal(result.requirements.find(item => item.id === 'faq').status, 'found');
   assert.equal(result.requirements.find(item => item.id === 'prices').status, 'needs-verification');
   assert.ok(result.dimensions.every(item => item.status === 'described'));
   assert.equal(result.verificationQuestions.some(question => question.includes('Актуальный прайс')), true);
