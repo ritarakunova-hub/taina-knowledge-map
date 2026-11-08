@@ -47,3 +47,17 @@ AI-помощник отдела продаж. Это шаблон требов�
 
 ## Что пока не автоматизировано
 Движок не читает тело прикреплённых файлов, не сравнивает смысловые противоречия и не подтверждает достоверность содержания. Сопоставление документов пока опирается на названия, связи с процессом и статусы. Это намеренное ограничение до появления извлечения текста и механизма проверки источников.
+
+
+## Evidence confirmation (v1.1)
+
+A matching record name is not proof that a requirement is satisfied. Each source or document now has explicit evidence fields:
+
+- `contentNotes`: a human-written summary of the relevant content; this is not extracted or validated automatically.
+- `evidenceStatus`: `Не проверено`, `Проверено владельцем`, `Устарело`, `Противоречие`, or `Не применимо`.
+- `verifiedBy` and `verifiedAt`: who confirmed the material and when.
+- `conflictNotes`: the nature of a known contradiction.
+
+The diagnostic counts a matched item as found only when it is explicitly marked `Проверено владельцем` and is not stale or contradictory. A known conflict blocks the requirement. All other name matches remain `needs-verification`. A missing match still means only `not-found-in-map`, not proof that the company has no such material.
+
+This release does not upload files, parse document contents, or discover contradictions automatically. Those require a separate secure file-processing pipeline and human confirmation.
