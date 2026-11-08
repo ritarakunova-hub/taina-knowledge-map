@@ -94,7 +94,7 @@ test('full first-cycle path saves linked knowledge, a task, and a restorable bac
   await page.getByRole('button', {name: 'Качество карты'}).click();
   await expect(page.getByText(/Проверка помогает найти незаполненные поля/)).toBeVisible();
   await page.getByRole('button', {name: 'Отчёты и экспорт'}).click();
-  await expect(page.getByText('Обработка обращения')).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Обработка обращения', exact: true})).toBeVisible();
 
   await page.getByRole('button', {name: 'План развития'}).click();
   await page.getByRole('button', {name: /Добавить/}).click();
