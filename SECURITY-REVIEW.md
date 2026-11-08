@@ -147,3 +147,10 @@ The earlier entries above describe the state of the initial source-only review o
 - No authentication, authorization, encryption at rest, server-side audit log, or team-sharing model exists in V1. Continue to use synthetic or anonymized information only.
 
 **Updated assessment:** the PR branch now passes dependency installation, high/critical dependency audit threshold, unit tests, browser E2E tests, and production build. It is suitable for controlled review and a non-sensitive pilot after merge/deployment checks; it is not approved for confidential corporate data.
+
+
+## Workflow supply-chain hardening — 2026-11-08
+
+- Replaced mutable major-version Action tags in both PR validation and Pages deployment workflows with verified full commit SHAs for checkout, setup-node, configure-pages, upload-pages-artifact, and deploy-pages.
+- The PR validation run after pinning, [42519427966](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/42519427966), completed successfully: dependency install, high/critical dependency audit threshold, unit tests, Playwright browser tests, and production build all passed.
+- This reduces mutable-tag risk for the Actions currently used. It does not replace periodic SHA updates, review of transitive action dependencies, or a full CI/CD threat model.
