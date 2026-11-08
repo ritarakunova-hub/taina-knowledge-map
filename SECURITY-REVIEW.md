@@ -126,3 +126,24 @@ The browser test is now less likely to hang due to missed transaction events, bu
 - The report now maps `Критический` risk or `Критическая` priority to critical, `Высокий` risk or `Высокая` priority to high, and all other values to medium. When multiple open gaps are linked to one process, the most severe explicit level is used.
 - Added a regression test covering high risk, critical risk, and critical priority.
 - Validation: 65/65 unit tests passed; global `tsc --noEmit` passed. Browser rendering and production bundle remain unverified.
+
+
+## CI verification update — 2026-11-08
+
+The earlier entries above describe the state of the initial source-only review on 2026-11-07. They are historical and are superseded for build/test/dependency-scan status by the following verification:
+
+- A committed `package-lock.json` is present (lockfileVersion 3); direct dependencies are exact-version pinned in `package.json` and the lockfile.
+- GitHub Actions run [42518950149](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/42518950149) on commit `14bca0beb63b4477ae0b7d80b1545920331691e0` completed successfully on 2026-11-08.
+- The run completed `npm ci`, `npm audit --audit-level=high`, the unit test suite, Playwright browser tests, and the production build. The audit step exited successfully, meaning no dependency advisory at high or critical severity was reported by that run. This is not a claim that the dependency tree has zero advisories at every severity.
+- The PR validation workflow has read-only `contents: read` permissions. The deploy workflow has the Pages permissions required for deployment. Third-party Actions are currently referenced by version tags (for example, `@v4` and `@v5`), not immutable commit SHAs; pinning Actions to verified full SHAs remains a supply-chain hardening task.
+- The PR remains open and in Draft. Its code has not been merged or deployed by this PR. The successful run validates the PR branch, not the production website.
+
+## Remaining security limitations
+
+- This is still a source review plus automated CI checks, not a penetration test, independent security assessment, or certification.
+- The dependency audit was run with `--audit-level=high`; lower-severity findings, license suitability, malicious-package behavior, and transitive package provenance require separate review.
+- GitHub Pages static hosting does not inherit the local Vite preview's HTTP response headers. The production HTML includes a CSP meta policy, but deployment-level headers such as `X-Content-Type-Options`, `X-Frame-Options` / `frame-ancestors`, and `Permissions-Policy` have not been independently verified on the live response.
+- Real IndexedDB crash/rollback behavior and multi-tab contention have unit coverage and a browser smoke-test harness, but the standalone atomicity harness is not part of the passing Playwright suite yet.
+- No authentication, authorization, encryption at rest, server-side audit log, or team-sharing model exists in V1. Continue to use synthetic or anonymized information only.
+
+**Updated assessment:** the PR branch now passes dependency installation, high/critical dependency audit threshold, unit tests, browser E2E tests, and production build. It is suitable for controlled review and a non-sensitive pilot after merge/deployment checks; it is not approved for confidential corporate data.
