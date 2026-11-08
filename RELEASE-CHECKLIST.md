@@ -2,9 +2,18 @@
 
 ## Confirmed in the preparation environment
 - [x] TypeScript static check: `tsc --noEmit`
-- [x] Unit tests: `node --experimental-strip-types --test tests/*.test.mjs` — 65/65 passed (последняя проверка 2026-11-07; включая CSP и ранжирование рисков)
+- [x] Unit tests: `node --experimental-strip-types --test tests/*.test.mjs` — 65/65 passed (локальная проверка 2026-11-07; включая CSP и ранжирование рисков)
 - [x] XLSX export structure: valid OpenXML archive with 9 worksheets
 - [x] ZIP archive integrity
+
+## Latest branch CI evidence — 2026-11-09
+- [x] Exact dependency versions and `package-lock.json` are committed; CI installed from the lockfile with `npm ci`.
+- [x] Dependency audit completed successfully (`npm audit --audit-level=high`).
+- [x] Unit tests completed successfully.
+- [x] Playwright browser tests completed successfully.
+- [x] Production TypeScript/Vite build completed successfully.
+
+Verified on PR head `575ee25ebfe49d142af03e7730c256cd60e6ae8d` by GitHub Actions run [42527485978](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/42527485978), job `validate` (all steps successful). This supersedes the earlier preparation-environment blockers below for this branch head. It does **not** replace the manual real-browser acceptance checks that remain unchecked.
 
 ## Must be completed before public sale
 - [ ] Pin dependency versions, generate and commit a lockfile, then run dependency vulnerability scanning (`npm audit` or equivalent).
