@@ -40,11 +40,24 @@ const meaningful = (input: unknown) => {
   const v = norm(value(input));
   return Boolean(v) && !['не указано', 'не определен', 'не определён', 'не описан', 'не описано', 'нет данных', 'пока документированных шагов нет', 'n/a', 'неизвестно'].includes(v);
 };
+const isValidDate = (input: unknown) => {
+  const date = value(input);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const [year, month, day] = date.split('-').map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+};
+const localToday = () => {
+  const now = new Date();
+  return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+};
 const isPastDate = (input: unknown) => {
   const date = value(input);
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return false;
-  const parsed = new Date(`${date}T00:00:00`);
-  return Number.isFinite(parsed.getTime()) && parsed.getTime() < new Date(new Date().toDateString()).getTime();
+  return isValidDate(date) && date < localToday();
+};
+const isFutureDate = (input: unknown) => {
+  const date = value(input);
+  return isValidDate(date) && date > localToday();
 };
 
 const salesAssistantRequirements: Requirement[] = [
