@@ -115,7 +115,9 @@ export function buildAutomationDiagnostic(project: Project, processId: string): 
   const linkedGaps = project.gaps.filter(item => value(item.process) === processId && !['готово', 'закрыта'].includes(norm(value(item.status))));
   const hasRules = meaningful(process.rules) || meaningful(process.decisions) || meaningful(process.exceptions);
   const hasControl = meaningful(process.kpi) || meaningful(process.control) || meaningful(process.metrics);
-  const reviewDates = [process.nextReview, process.reviewDate, ...documents.map(item => item.nextReview)].filter(meaningful).map(value);\n  const overdueReviews = reviewDates.filter(isPastDate);\n  const hasReview = reviewDates.length > 0;
+  const reviewDates = [process.nextReview, process.reviewDate, ...documents.map(item => item.nextReview)].filter(meaningful).map(value);
+  const overdueReviews = reviewDates.filter(isPastDate);
+  const hasReview = reviewDates.length > 0;
   const dimensions: ProcessDimension[] = [
     dimension('purpose', 'Цель процесса', meaningful(process.purpose), [value(process.purpose)].filter(Boolean), 'Какой измеримый результат должен дать процесс?'),
     dimension('steps', 'Последовательность действий', meaningful(process.steps), [value(process.steps)].filter(Boolean), 'Все ли реальные шаги и варианты выполнения описаны?'),
