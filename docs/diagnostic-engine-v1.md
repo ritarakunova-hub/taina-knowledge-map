@@ -66,3 +66,11 @@ This release does not upload files, parse document contents, or discover contrad
 ## Status implementation note
 
 The engine currently emits `found`, `not-found-in-map`, `needs-verification`, and `contradictory`. The `partial` value is reserved in the type for a future content-completeness assessment and is not emitted by this version. A human-written `contentNotes` summary is evidence context, not automatic proof of completeness.
+
+
+## Verification and review-date safeguards (v1.2)
+
+- A record marked `Проверено владельцем` counts as confirmed evidence only when both `verifiedBy` and a valid `verifiedAt` date are present.
+- A past `nextReview` date makes a matching source/document require re-verification even if its status still says `Действует`.
+- A past process/document review date is shown as `incomplete`, not as current. The date check uses the user's browser's local calendar date.
+- These checks are structural safeguards. They do not prove that the named person had authority, that the file content was actually read, or that the content remains factually correct.
