@@ -124,6 +124,7 @@ export function buildAutomationDiagnostic(project: Project, processId: string): 
     requirements,
     readiness,
     readinessReasons,
+    verificationQuestions,
     disclaimer: 'Это предварительная проверка структуры карты для сценария AI-помощника продаж. «Не найдено в карте» не означает, что документа нет в компании. Содержание, актуальность, права доступа, безопасность и качество ответов должны быть проверены людьми до пилота.'
   };
 }
