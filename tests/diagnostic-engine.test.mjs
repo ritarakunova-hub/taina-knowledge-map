@@ -27,13 +27,13 @@ test('diagnostic finds linked materials by name and flags stale materials for ve
   p.processes = [{ id: 'sales', name: 'Продажи', purpose: 'Продать', steps: 'Принять лид; связаться', owner: 'o1', rules: 'Скидки только по согласованию', kpi: 'Конверсия', nextReview: '2027-01-01' }];
   p.owners = [{ id: 'o1', name: 'Анна', role: 'Руководитель' }];
   p.documents = [
-    { id: 'd1', name: 'Каталог продуктов и услуг', process: 'sales', owner: 'o1', status: 'Действует', nextReview: '2027-01-01' },
+    { id: 'd1', name: 'Каталог продуктов и услуг', process: 'sales', owner: 'o1', status: 'Действует', evidenceStatus: 'Проверено владельцем', contentNotes: 'Состав услуг и ограничения сверены', verifiedBy: 'Анна', verifiedAt: '2026-11-08', nextReview: '2027-01-01' },
     { id: 'd2', name: 'Прайс и правила скидок', process: 'sales', owner: 'o1', status: 'Устарела', nextReview: '2025-01-01' }
   ];
-  p.sources = [{ id: 's1', name: 'FAQ — частые вопросы клиентов', process: 'sales', owner: 'o1', location: 'Drive', type: 'Документ' }];
+  p.sources = [{ id: 's1', name: 'FAQ — частые вопросы клиентов', process: 'sales', owner: 'o1', location: 'Drive', type: 'Документ', evidenceStatus: 'Проверено владельцем', contentNotes: 'Ответы согласованы с руководителем', verifiedBy: 'Анна', verifiedAt: '2026-11-08' }];
   const result = buildAutomationDiagnostic(p, 'sales');
-  assert.equal(result.requirements.find(item => item.id === 'product').status, 'found');
-  assert.equal(result.requirements.find(item => item.id === 'faq').status, 'found');
+  assert.equal(result.requirements.find(item => item.id === 'product').status, 'needs-verification');
+  assert.equal(result.requirements.find(item => item.id === 'faq').status, 'needs-verification');
   assert.equal(result.requirements.find(item => item.id === 'prices').status, 'needs-verification');
   assert.ok(result.dimensions.every(item => item.status === 'described'));
   assert.equal(result.verificationQuestions.some(question => question.includes('Актуальный прайс')), true);
@@ -42,4 +42,25 @@ test('diagnostic finds linked materials by name and flags stale materials for ve
 test('unknown process returns null and empty map never invents process findings', () => {
   const p = project();
   assert.equal(buildAutomationDiagnostic(p, 'missing'), null);
+});
+
+
+test('owner confirmation is required before a matched document counts as evidence', () => {
+  const p = project();
+  p.processes = [{ id: 'sales', name: 'Продажи', purpose: 'Продать', steps: 'Принять лид', owner: 'o1' }];
+  p.owners = [{ id: 'o1', name: 'Анна', role: 'Руководитель' }];
+  p.documents = [{ id: 'd1', name: 'Прайс и правила скидок', process: 'sales', owner: 'o1', status: 'Действует', evidenceStatus: 'Проверено владельцем', contentNotes: 'Цены и пределы скидок сверены', verifiedBy: 'Анна', verifiedAt: '2026-11-08' }];
+  const prices = buildAutomationDiagnostic(p, 'sales').requirements.find(item => item.id === 'prices');
+  assert.equal(prices.status, 'found');
+  assert.match(prices.evidence.join(' '), /Цены и пределы скидок сверены/);
+});
+
+test('explicit conflict blocks evidence even when a material was otherwise approved', () => {
+  const p = project();
+  p.processes = [{ id: 'sales', name: 'Продажи', purpose: 'Продать', steps: 'Принять лид', owner: 'o1' }];
+  p.owners = [{ id: 'o1', name: 'Анна', role: 'Руководитель' }];
+  p.documents = [{ id: 'd1', name: 'Прайс и правила скидок', process: 'sales', owner: 'o1', status: 'Действует', evidenceStatus: 'Противоречие', conflictNotes: 'В прайсе и CRM разные пределы скидок' }];
+  const result = buildAutomationDiagnostic(p, 'sales');
+  assert.equal(result.requirements.find(item => item.id === 'prices').status, 'contradictory');
+  assert.equal(result.readiness, 'preparation-needed');
 });
