@@ -101,3 +101,14 @@ test('a future verification date is not accepted as owner confirmation', () => {
   const prices = buildAutomationDiagnostic(p, 'sales').requirements.find(item => item.id === 'prices');
   assert.equal(prices.status, 'needs-verification');
 });
+
+
+test('overdue source review date is included in evidence freshness and review dimension', () => {
+  const p = project();
+  p.processes = [{ id: 'sales', name: 'Продажи', purpose: 'Продать', steps: 'Принять лид', nextReview: '2027-01-01' }];
+  p.sources = [{ id: 's1', name: 'Прайс и правила скидок', process: 'sales', status: 'Действует', evidenceStatus: 'Проверено владельцем', verifiedBy: 'Анна', verifiedAt: '2026-11-08', nextReview: '2020-01-01' }];
+  const result = buildAutomationDiagnostic(p, 'sales');
+  assert.equal(result.requirements.find(item => item.id === 'prices').status, 'needs-verification');
+  assert.equal(result.dimensions.find(item => item.id === 'review').status, 'incomplete');
+  assert.match(result.dimensions.find(item => item.id === 'review').question, /срок проверки уже прошёл/i);
+});
