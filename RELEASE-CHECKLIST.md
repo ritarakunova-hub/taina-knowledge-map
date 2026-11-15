@@ -68,6 +68,7 @@
 - `materials/11-client-intake.md`
 - `materials/12-sales-page-copy.md`
 - `materials/13-pilot-outreach-kit.md`
+- `materials/14-prospect-shortlist-2026-11-15.md`
 - `materials/07-management-report-template.md`
 
 ## 5. Пока не разрешено обещать или продавать как готовую функцию
