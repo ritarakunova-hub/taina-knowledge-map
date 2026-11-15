@@ -164,3 +164,14 @@ The earlier entries above describe the state of the initial source-only review o
 - Added regression tests for missing verifier metadata, expired evidence review dates, overdue process review, and future-dated confirmation.
 - The PR validation workflow for commit `77bd9631a8f01df5f8de01830612957335710076` (run [42520189733](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/42520189733)) passed unit tests, browser tests, dependency audit at high/critical threshold, and production build.
 - The date-validation helper correction and all regression tests are included in the successfully validated commit above. The documentation-only update in this file is a later commit; its PR workflow is being re-run.
+
+
+## Latest automated verification — 2026-11-15
+
+- The full GitHub Actions validation on code commit `b1a302b805c6e5492e286f13af5d1056e06ee3b1` completed successfully: locked dependency installation, `npm audit --audit-level=high`, unit tests, Playwright browser tests, and production build. See [run 43707142827](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/43707142827).
+- The passing audit step means no vulnerability at the configured high-or-critical threshold caused the job to fail; it does not establish that the dependency tree has no lower-severity advisories or other supply-chain risks.
+- Documentation-only commits followed the validated code commit. They updated the release checklist and project status text; application source, dependencies, and CI workflow were not changed by those commits.
+- This result is automated CI evidence, not a penetration test, independent security assessment, legal review, production-hosting header check, or approval to process confidential or sensitive data.
+- The remaining release checks in `RELEASE-CHECKLIST.md` still apply, including real-device/storage, IndexedDB atomicity and multi-tab behavior, Excel/LibreOffice export, production hosting headers, and observed user acceptance.
+
+**Current controlled-use boundary:** the V1 may be used only with synthetic or explicitly approved anonymized, non-sensitive data. Do not treat the successful CI run as authorization to store personal, medical, financial, client, credential, or confidential corporate information.
