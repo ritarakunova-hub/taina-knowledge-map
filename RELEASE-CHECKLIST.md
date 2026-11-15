@@ -6,7 +6,7 @@
 
 ## 1. Автоматизированные проверки — пройдены
 
-Последний CI на актуальном HEAD `5723a6a1c1e6bcb5bddd40ca73504bfc6be270ac` завершился успешно 15 ноября 2026: [GitHub Actions run 43703223706](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/43703223706).
+Последний CI на HEAD `b1a302b805c6e5492e286f13af5d1056e06ee3b1` завершился успешно 15 ноября 2026: [GitHub Actions run 43707142827](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/43707142827).
 
 В запуске успешно выполнены:
 - [x] Установка зависимостей через `npm ci` из зафиксированного lockfile.
