@@ -170,7 +170,7 @@ The earlier entries above describe the state of the initial source-only review o
 
 - The full GitHub Actions validation on code commit `b1a302b805c6e5492e286f13af5d1056e06ee3b1` completed successfully: locked dependency installation, `npm audit --audit-level=high`, unit tests, Playwright browser tests, and production build. See [run 43707142827](https://github.com/ritarakunova-hub/taina-knowledge-map/actions/runs/43707142827).
 - The passing audit step means no vulnerability at the configured high-or-critical threshold caused the job to fail; it does not establish that the dependency tree has no lower-severity advisories or other supply-chain risks.
-- Documentation-only commits followed the validated code commit. They updated the release checklist and project status text; application source, dependencies, and CI workflow were not changed by those commits.
+- Documentation-only commits followed the validated code commit. They updated the README and release checklist, added the first-pilot outreach kit, and recorded the current security status; application source, dependencies, and CI workflow were not changed by those commits.
 - This result is automated CI evidence, not a penetration test, independent security assessment, legal review, production-hosting header check, or approval to process confidential or sensitive data.
 - The remaining release checks in `RELEASE-CHECKLIST.md` still apply, including real-device/storage, IndexedDB atomicity and multi-tab behavior, Excel/LibreOffice export, production hosting headers, and observed user acceptance.
 
