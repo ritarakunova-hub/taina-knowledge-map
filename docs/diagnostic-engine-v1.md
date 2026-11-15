@@ -1,0 +1,76 @@
+# Диагностический движок TAINA Knowledge Map — первый сценарий
+
+## Цель
+Показать владельцу компании, какие сведения о выбранном процессе уже отражены в карте, какие элементы не зафиксированы и какие материалы потребуются для конкретного сценария автоматизации.
+
+## Первый сценарий
+AI-помощник отдела продаж. Это шаблон требований для проверки, а не универсальный перечень документов для любой автоматизации.
+
+## Семь измерений процесса
+1. Цель.
+2. Последовательность действий.
+3. Ответственный и замещение.
+4. Источники и документы.
+5. Правила решений и исключения.
+6. Контроль качества и показатели.
+7. Актуальность и период пересмотра.
+
+## Статусы доказательств
+- Найдено в карте — есть связанный материал, который ещё нужно проверить по содержанию.
+- Не найдено в карте — нет связанной записи; это не доказывает отсутствие документа в компании.
+- Требует проверки — найден устаревший материал или неоднозначные сведения.
+- Частично — используется для будущего расширения, когда будет поддержана оценка полноты содержания.
+- Противоречие — используется после добавления явных конфликтующих утверждений с указанием обеих сторон.
+
+## Требования сценария продаж
+- каталог продуктов и услуг;
+- актуальный прайс и правила скидок;
+- описание процесса продаж;
+- FAQ и типовые ответы;
+- подтверждённые кейсы;
+- правила передачи обращения человеку;
+- исключения и ограничения;
+- структура CRM и правила работы с лидами;
+- критерии качества и контроль ответов.
+
+## Ограничения первого прототипа
+Сопоставление пока выполняется по названию связанных записей и явным полям процесса. Оно не читает содержимое файлов и не использует языковую модель. Поэтому найденный материал не считается подтверждённым, а ненайденный — отсутствующим. Перед пилотом требуется ручная проверка содержания, прав доступа, безопасности, интеграций и тестовых ответов.
+
+## Кадровые выводы
+Прототип не рекомендует увольнять, нанимать или перераспределять сотрудников. Он показывает отсутствие владельца процесса/источника и предлагает проверить ответственность и резервирование. Вывод о нехватке мощности требует данных об объёме задач, загрузке, SLA и компетенциях.
+
+## Интервью владельца процесса
+Для каждого незакрытого требования формируется конкретный вопрос: где находится действующий материал, кто его утверждает, какие правила и ограничения обязательны, как передавать нестандартные случаи человеку и как измерять качество. Вопросы выводятся в отчёте и ведут пользователя к карточке процесса.
+
+## Расширенные поля процесса
+В карточке процесса предусмотрены отдельные поля для рабочих правил, принятия решений, исключений, KPI, контроля результата и даты пересмотра. Они заполняются владельцем или ответственным сотрудником, а не генерируются предположениями системы.
+
+## Что пока не автоматизировано
+Движок не читает тело прикреплённых файлов, не сравнивает смысловые противоречия и не подтверждает достоверность содержания. Сопоставление документов пока опирается на названия, связи с процессом и статусы. Это намеренное ограничение до появления извлечения текста и механизма проверки источников.
+
+
+## Evidence confirmation (v1.1)
+
+A matching record name is not proof that a requirement is satisfied. Each source or document now has explicit evidence fields:
+
+- `contentNotes`: a human-written summary of the relevant content; this is not extracted or validated automatically.
+- `evidenceStatus`: `Не проверено`, `Проверено владельцем`, `Устарело`, `Противоречие`, or `Не применимо`.
+- `verifiedBy` and `verifiedAt`: who confirmed the material and when.
+- `conflictNotes`: the nature of a known contradiction.
+
+The diagnostic counts a matched item as found only when it is explicitly marked `Проверено владельцем` and is not stale or contradictory. A known conflict blocks the requirement. All other name matches remain `needs-verification`. A missing match still means only `not-found-in-map`, not proof that the company has no such material.
+
+This release does not upload files, parse document contents, or discover contradictions automatically. Those require a separate secure file-processing pipeline and human confirmation.
+
+
+## Status implementation note
+
+The engine currently emits `found`, `not-found-in-map`, `needs-verification`, and `contradictory`. The `partial` value is reserved in the type for a future content-completeness assessment and is not emitted by this version. A human-written `contentNotes` summary is evidence context, not automatic proof of completeness.
+
+
+## Verification and review-date safeguards (v1.2)
+
+- A record marked `Проверено владельцем` counts as confirmed evidence only when both `verifiedBy` and a valid `verifiedAt` date are present.
+- A past `nextReview` date makes a matching source/document require re-verification even if its status still says `Действует`.
+- A past process/document review date is shown as `incomplete`, not as current. The date check uses the user's browser's local calendar date.
+- These checks are structural safeguards. They do not prove that the named person had authority, that the file content was actually read, or that the content remains factually correct.
